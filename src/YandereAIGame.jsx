@@ -16,61 +16,77 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-// Waifu definitions with unique personalities
-const waifus = {
-  aiko: {
+// Single waifu with different personality types
+const waifuTypes = {
+  sweet: {
     name: "Aiko",
     personality: "Sweet & Caring",
     description:
-      "The main character with a sweet, caring nature who loves deeply",
+      "A sweet, caring waifu who loves deeply and wants to protect you",
     color: "from-pink-400 to-red-500",
     icon: "💕",
     traits: ["loving", "protective", "romantic"],
     yandereTrigger: "possessive",
   },
-  yuki: {
+  cheerful: {
     name: "Yuki",
     personality: "Cheerful & Energetic",
-    description:
-      "Always cheerful and full of energy, loves to make others smile",
+    description: "Always cheerful and full of energy, loves to make you smile",
     color: "from-blue-400 to-cyan-500",
     icon: "❄️",
     traits: ["energetic", "optimistic", "playful"],
     yandereTrigger: "jealous",
   },
-  sakura: {
+  shy: {
     name: "Sakura",
     personality: "Shy & Gentle",
-    description: "Gentle and shy, but has a hidden strength and determination",
+    description: "Gentle and shy, but has hidden strength and determination",
     color: "from-pink-300 to-purple-400",
     icon: "🌸",
     traits: ["shy", "gentle", "determined"],
     yandereTrigger: "clingy",
   },
-  mai: {
+  friendly: {
     name: "Mai",
     personality: "Friendly & Smiling",
-    description:
-      "Friendly and always smiling, brings joy to everyone around her",
+    description: "Friendly and always smiling, brings joy to your life",
     color: "from-yellow-400 to-orange-500",
     icon: "☀️",
     traits: ["friendly", "cheerful", "social"],
     yandereTrigger: "territorial",
   },
-  hana: {
+  warm: {
     name: "Hana",
     personality: "Welcoming & Warm",
-    description: "Warm and welcoming, makes everyone feel at home",
+    description: "Warm and welcoming, makes you feel at home",
     color: "from-green-400 to-emerald-500",
     icon: "🌺",
     traits: ["nurturing", "warm", "motherly"],
     yandereTrigger: "overprotective",
   },
+  mysterious: {
+    name: "Luna",
+    personality: "Mysterious & Enigmatic",
+    description: "Mysterious and enigmatic, with hidden depths and secrets",
+    color: "from-purple-600 to-indigo-700",
+    icon: "🌙",
+    traits: ["mysterious", "enigmatic", "alluring"],
+    yandereTrigger: "obsessive",
+  },
 };
 
 const YandereAIGame = () => {
+  console.log("YandereAIGame component rendering");
+
   // Core game states
   const [gameState, setGameState] = useState("start"); // start, waifuSelect, playing, ended
+
+  // Debug game state changes
+  useEffect(() => {
+    console.log("Game state changed to:", gameState);
+  }, [gameState]);
+
+  // All state declarations
   const [selectedWaifu, setSelectedWaifu] = useState(null);
   const [mood, setMood] = useState("neutral");
   const [affection, setAffection] = useState(50);
@@ -84,8 +100,651 @@ const YandereAIGame = () => {
   const [musicEnabled, setMusicEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [currentMusic, setCurrentMusic] = useState(null);
+  const [selectedMusicTrack, setSelectedMusicTrack] = useState(0);
+  const [greetingImage, setGreetingImage] = useState("");
 
-  // API endpoints for different moods
+  // New feature states
+  const [achievements, setAchievements] = useState([]);
+  const [unlockedOutfits, setUnlockedOutfits] = useState([]);
+  const [currentOutfit, setCurrentOutfit] = useState("default");
+  const [photoMode, setPhotoMode] = useState(false);
+  const [screenshots, setScreenshots] = useState([]);
+  const [currentTheme, setCurrentTheme] = useState("purple");
+  const [gifts, setGifts] = useState([]);
+  const [currentDate, setCurrentDate] = useState(null);
+  const [dateLocation, setDateLocation] = useState(null);
+  const [miniGame, setMiniGame] = useState(null);
+  const [conversationMemory, setConversationMemory] = useState([]);
+  const [storyProgress, setStoryProgress] = useState(0);
+  const [unlockedEndings, setUnlockedEndings] = useState([]);
+
+  // Play ending sound effect when game ends
+  useEffect(() => {
+    if (gameState === "ended") {
+      playEndingSound(mood, affection);
+    }
+  }, [gameState, mood, affection]);
+
+  // Check achievements
+  useEffect(() => {
+    checkAchievements();
+  }, [
+    conversationCount,
+    affection,
+    screenshots.length,
+    currentDate,
+    gifts.length,
+    unlockedEndings.length,
+  ]);
+
+  // Unlock outfits based on achievements
+  useEffect(() => {
+    const newUnlockedOutfits = [...unlockedOutfits];
+
+    // Unlock casual outfit after first conversation
+    if (conversationCount >= 1 && !newUnlockedOutfits.includes("casual")) {
+      newUnlockedOutfits.push("casual");
+    }
+
+    // Unlock school uniform after 3 conversations
+    if (conversationCount >= 3 && !newUnlockedOutfits.includes("school")) {
+      newUnlockedOutfits.push("school");
+    }
+
+    // Unlock formal outfit at 80% affection
+    if (affection >= 80 && !newUnlockedOutfits.includes("formal")) {
+      newUnlockedOutfits.push("formal");
+    }
+
+    // Unlock party dress after taking 5 screenshots
+    if (screenshots.length >= 5 && !newUnlockedOutfits.includes("party")) {
+      newUnlockedOutfits.push("party");
+    }
+
+    // Unlock summer dress after going on 2 dates
+    if (currentDate >= 2 && !newUnlockedOutfits.includes("summer")) {
+      newUnlockedOutfits.push("summer");
+    }
+
+    // Unlock winter coat after giving 3 gifts
+    if (gifts.length >= 3 && !newUnlockedOutfits.includes("winter")) {
+      newUnlockedOutfits.push("winter");
+    }
+
+    // Unlock cyber outfit after unlocking all other outfits
+    if (
+      newUnlockedOutfits.length >= 7 &&
+      !newUnlockedOutfits.includes("cyber")
+    ) {
+      newUnlockedOutfits.push("cyber");
+    }
+
+    setUnlockedOutfits(newUnlockedOutfits);
+  }, [
+    conversationCount,
+    affection,
+    screenshots.length,
+    currentDate,
+    gifts.length,
+    unlockedOutfits,
+  ]);
+
+  // Achievement checking function
+  const checkAchievements = () => {
+    const newAchievements = [...achievements];
+
+    // First Love
+    if (conversationCount >= 1 && !newAchievements.includes("first_love")) {
+      newAchievements.push("first_love");
+      showAchievementNotification("first_love");
+    }
+
+    // Sweet Talker
+    if (affection >= 80 && !newAchievements.includes("sweet_talker")) {
+      newAchievements.push("sweet_talker");
+      showAchievementNotification("sweet_talker");
+    }
+
+    // Photo Enthusiast
+    if (
+      screenshots.length >= 10 &&
+      !newAchievements.includes("photo_enthusiast")
+    ) {
+      newAchievements.push("photo_enthusiast");
+      showAchievementNotification("photo_enthusiast");
+    }
+
+    // Date Expert
+    if (
+      currentDate &&
+      currentDate >= 3 &&
+      !newAchievements.includes("date_expert")
+    ) {
+      newAchievements.push("date_expert");
+      showAchievementNotification("date_expert");
+    }
+
+    // Gift Giver
+    if (gifts.length >= 5 && !newAchievements.includes("gift_giver")) {
+      newAchievements.push("gift_giver");
+      showAchievementNotification("gift_giver");
+    }
+
+    setAchievements(newAchievements);
+  };
+
+  // Show achievement notification
+  const showAchievementNotification = (achievementId) => {
+    const achievement = achievementList.find((a) => a.id === achievementId);
+    if (achievement) {
+      // Create notification element
+      const notification = document.createElement("div");
+      notification.className =
+        "fixed top-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg z-50 animate-bounce";
+      notification.innerHTML = `
+        <div class="flex items-center space-x-2">
+          <span class="text-2xl">${achievement.icon}</span>
+          <div>
+            <div class="font-bold">Achievement Unlocked!</div>
+            <div class="text-sm">${achievement.name}</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(notification);
+
+      // Remove after 3 seconds
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
+    }
+  };
+
+  // Photo Mode Functions
+  const takeScreenshot = () => {
+    const screenshot = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleString(),
+      waifu: selectedWaifu,
+      mood: mood,
+      affection: affection,
+      dialogue: dialogue,
+    };
+    setScreenshots([...screenshots, screenshot]);
+    playSound("click");
+  };
+
+  // Gift System Functions
+  const giveGift = (giftId) => {
+    const gift = giftList.find((g) => g.id === giftId);
+    if (gift) {
+      setGifts([...gifts, { ...gift, timestamp: Date.now() }]);
+      setAffection((prev) => Math.min(100, prev + gift.value));
+      playSound("click");
+
+      // Gift-specific reactions based on waifu type and gift
+      const getGiftReaction = (gift, waifuType) => {
+        const reactions = {
+          chocolate: {
+            sweet:
+              "Chocolate! You know I have a sweet tooth! This is perfect! 🍫💕",
+            cheerful:
+              "Yay! Chocolate! You're so sweet to remember my favorite! 🍫✨",
+            shy: "T-thank you... chocolate is my weakness... *blushes* 🍫😊",
+            friendly:
+              "Oh my! Chocolate! You really know how to make a girl happy! 🍫💕",
+            warm: "Chocolate... you remembered my favorite treat! You're so thoughtful! 🍫💕",
+            mysterious:
+              "Chocolate... how did you know? *mysterious smile* This is... perfect 🍫✨",
+          },
+          flowers: {
+            sweet: "These flowers are so beautiful! Just like our love! 🌸💕",
+            cheerful:
+              "Flowers! They're so pretty! You always know how to make me smile! 🌸✨",
+            shy: "F-flowers... for me? *blushes deeply* T-thank you... 🌸😊",
+            friendly: "Aww! Flowers! You're such a romantic! I love them! 🌸💕",
+            warm: "These flowers are gorgeous! You have such good taste! 🌸💕",
+            mysterious:
+              "Flowers... *smiles mysteriously* They remind me of... secrets 🌸✨",
+          },
+          jewelry: {
+            sweet:
+              "Jewelry! This is so elegant! I'll treasure it forever! 💎💕",
+            cheerful:
+              "Wow! Jewelry! You're so generous! I feel like a princess! 💎✨",
+            shy: "J-jewelry? For me? *blushes* I... I don't know what to say... 💎😊",
+            friendly:
+              "Jewelry! You really know how to spoil a girl! I love it! 💎💕",
+            warm: "This jewelry is beautiful! You have such wonderful taste! 💎💕",
+            mysterious:
+              "Jewelry... *examines it carefully* This has... interesting properties 💎✨",
+          },
+          book: {
+            sweet:
+              "A book! You know I love reading! This is so thoughtful! 📚💕",
+            cheerful: "A book! I love reading! You know me so well! 📚✨",
+            shy: "A... book? T-thank you... I love reading... *hugs it* 📚😊",
+            friendly:
+              "A book! Perfect! I love how you remember my interests! 📚💕",
+            warm: "This book looks fascinating! You always pick the best gifts! 📚💕",
+            mysterious:
+              "A book... *opens it* Ah, this contains... secrets I've been seeking 📚✨",
+          },
+          plushie: {
+            sweet:
+              "A plushie! It's so cute! I'll cuddle with it and think of you! 🧸💕",
+            cheerful: "A plushie! It's adorable! I love cute things! 🧸✨",
+            shy: "A... plushie? *hugs it tightly* It's so soft... thank you... 🧸😊",
+            friendly: "A plushie! How cute! You know I love soft things! 🧸💕",
+            warm: "This plushie is so soft and cuddly! Perfect for bedtime! 🧸💕",
+            mysterious:
+              "A plushie... *examines it* This one has... unusual eyes... 🧸✨",
+          },
+          cake: {
+            sweet: "Cake! You know I love sweets! This looks delicious! 🎂💕",
+            cheerful: "Cake! Yummy! You're the sweetest for getting this! 🎂✨",
+            shy: "C-cake? For me? *blushes* I... I love cake... 🎂😊",
+            friendly: "Cake! Perfect! You know how to make a girl happy! 🎂💕",
+            warm: "This cake looks amazing! You have such good taste! 🎂💕",
+            mysterious:
+              "Cake... *smiles* This one has... special ingredients, doesn't it? 🎂✨",
+          },
+        };
+
+        return (
+          reactions[gift.id]?.[waifuType] || "Thank you so much! I love it! 💕"
+        );
+      };
+
+      const reaction = getGiftReaction(gift, selectedWaifu);
+      setDialogue(reaction);
+
+      // Add to conversation history
+      const newEntry = {
+        player: `Gave ${gift.name}`,
+        waifu: reaction,
+        mood: mood,
+        affection: affection + gift.value,
+      };
+      setConversationHistory((prev) => [...prev, newEntry]);
+      addToMemory(newEntry);
+    }
+  };
+
+  // Date System Functions
+  const startDate = (locationId) => {
+    const location = dateLocations.find((l) => l.id === locationId);
+    if (location) {
+      setDateLocation(location);
+      setCurrentDate((prev) => (prev || 0) + 1);
+      setGameState("date");
+      playSound("click");
+
+      // Generate date-specific dialogue
+      const dateDialogues = {
+        cafe: [
+          "This cafe is so cozy! I love spending time here with you~ ☕",
+          "The coffee here is amazing! But you're even sweeter than this dessert! 💕",
+          "I feel so relaxed here... it's like we're in our own little world ✨",
+        ],
+        park: [
+          "The cherry blossoms are so beautiful! Just like you~ 🌸",
+          "I love walking through the park with you... it's so romantic! 💕",
+          "This place makes me feel so peaceful... especially with you here ✨",
+        ],
+        beach: [
+          "The sunset is gorgeous! But you're even more beautiful! 🌅",
+          "I love the sound of the waves... and your voice is even more soothing! 🌊",
+          "This beach is perfect for a romantic walk with you~ 💕",
+        ],
+        school: [
+          "The school rooftop... this brings back so many memories! 🏫",
+          "I used to come here to think... but now I come here to be with you! 💕",
+          "This place feels so nostalgic... and you make it even more special ✨",
+        ],
+        library: [
+          "I love the quiet atmosphere here... perfect for intimate conversations! 📚",
+          "There are so many books here... but you're the most interesting story! 💕",
+          "This library is so peaceful... I feel so close to you here ✨",
+        ],
+        garden: [
+          "This secret garden is so mysterious... just like you! 🌹",
+          "I love how secluded this place is... it's like our own private world! 💕",
+          "The flowers here are beautiful... but you're the most beautiful flower of all! ✨",
+        ],
+      };
+
+      const randomDialogue =
+        dateDialogues[locationId][
+          Math.floor(Math.random() * dateDialogues[locationId].length)
+        ];
+      setDialogue(randomDialogue);
+    }
+  };
+
+  // Date activities
+  const dateActivities = {
+    cafe: [
+      {
+        name: "Order Coffee",
+        description: "Share a warm cup together",
+        affection: 5,
+        dialogue: "This coffee tastes so much better when I'm with you! ☕",
+      },
+      {
+        name: "Share Dessert",
+        description: "Feed each other sweet treats",
+        affection: 8,
+        dialogue: "You're sweeter than any dessert! 💕",
+      },
+      {
+        name: "Deep Conversation",
+        description: "Talk about your dreams",
+        affection: 10,
+        dialogue: "I love how we can talk about anything together! ✨",
+      },
+    ],
+    park: [
+      {
+        name: "Walk Hand in Hand",
+        description: "Stroll through the cherry blossoms",
+        affection: 6,
+        dialogue: "Walking with you feels like a dream! 🌸",
+      },
+      {
+        name: "Take Photos",
+        description: "Capture beautiful moments",
+        affection: 7,
+        dialogue: "Every moment with you is worth remembering! 📸",
+      },
+      {
+        name: "Sit on Bench",
+        description: "Watch the world go by",
+        affection: 9,
+        dialogue: "Time seems to stop when I'm with you! 💕",
+      },
+    ],
+    beach: [
+      {
+        name: "Build Sandcastle",
+        description: "Create something together",
+        affection: 8,
+        dialogue: "Building memories with you is the best! 🏖️",
+      },
+      {
+        name: "Watch Sunset",
+        description: "Enjoy the beautiful view",
+        affection: 12,
+        dialogue: "The sunset is beautiful, but you're even more stunning! 🌅",
+      },
+      {
+        name: "Walk Barefoot",
+        description: "Feel the sand between your toes",
+        affection: 6,
+        dialogue: "Everything feels magical when I'm with you! ✨",
+      },
+    ],
+    school: [
+      {
+        name: "Share Lunch",
+        description: "Eat together on the rooftop",
+        affection: 7,
+        dialogue: "School lunches taste better when shared with you! 🍱",
+      },
+      {
+        name: "Study Together",
+        description: "Help each other learn",
+        affection: 5,
+        dialogue: "I learn so much more when I'm with you! 📚",
+      },
+      {
+        name: "Watch the City",
+        description: "Enjoy the view from above",
+        affection: 10,
+        dialogue: "The city looks so peaceful from up here... with you! 🌆",
+      },
+    ],
+    library: [
+      {
+        name: "Read Together",
+        description: "Share a book",
+        affection: 6,
+        dialogue: "Reading with you is so cozy and intimate! 📖",
+      },
+      {
+        name: "Whisper Secrets",
+        description: "Share quiet confidences",
+        affection: 8,
+        dialogue: "I love how we can share secrets in this quiet place! 💕",
+      },
+      {
+        name: "Find Hidden Books",
+        description: "Explore the shelves together",
+        affection: 7,
+        dialogue: "Discovering new books with you is an adventure! ✨",
+      },
+    ],
+    garden: [
+      {
+        name: "Pick Flowers",
+        description: "Create a bouquet together",
+        affection: 9,
+        dialogue:
+          "These flowers are beautiful, but you're the most beautiful! 🌹",
+      },
+      {
+        name: "Hide and Seek",
+        description: "Play a romantic game",
+        affection: 8,
+        dialogue: "Playing with you makes me feel so young and happy! 💕",
+      },
+      {
+        name: "Share a Kiss",
+        description: "A tender moment together",
+        affection: 15,
+        dialogue: "This garden is perfect for our special moments! ✨",
+      },
+    ],
+  };
+
+  const doDateActivity = (activity) => {
+    setAffection((prev) => Math.min(100, prev + activity.affection));
+    setDialogue(activity.dialogue);
+    playSound("click");
+
+    // Add to conversation history
+    const newEntry = {
+      player: `Did activity: ${activity.name}`,
+      waifu: activity.dialogue,
+      mood: mood,
+      affection: affection + activity.affection,
+    };
+    setConversationHistory((prev) => [...prev, newEntry]);
+    addToMemory(newEntry);
+  };
+
+  // Mini-Game Functions
+  const startMiniGame = (gameId) => {
+    setMiniGame(gameId);
+    setGameState("minigame");
+    playSound("click");
+  };
+
+  // Mini-game state
+  const [gameScore, setGameScore] = useState(0);
+  const [gameTime, setGameTime] = useState(30);
+  const [gameActive, setGameActive] = useState(false);
+
+  // Cooking Game
+  const cookingGame = {
+    ingredients: ["🍅", "🥬", "🧄", "🧅", "🥕", "🥩", "🍄", "🧀"],
+    recipes: [
+      { name: "Pasta", ingredients: ["🍅", "🧄", "🧀"], points: 10 },
+      { name: "Salad", ingredients: ["🥬", "🍅", "🥕"], points: 8 },
+      { name: "Stir Fry", ingredients: ["🥩", "🥬", "🧄"], points: 12 },
+    ],
+  };
+
+  // Memory Game
+  const memoryGame = {
+    cards: ["💕", "🌸", "✨", "🎀", "💎", "🌹", "🎂", "🎁"],
+    flipped: [],
+    matched: [],
+  };
+
+  // Trivia Questions
+  const triviaQuestions = [
+    {
+      question: "What's the best way to show your love?",
+      options: ["Gifts", "Time together", "Sweet words", "All of the above"],
+      correct: 3,
+      points: 10,
+    },
+    {
+      question: "What makes a perfect date?",
+      options: [
+        "Expensive restaurant",
+        "Being together",
+        "Fancy clothes",
+        "Perfect weather",
+      ],
+      correct: 1,
+      points: 10,
+    },
+    {
+      question: "What's the most romantic gesture?",
+      options: [
+        "Buying flowers",
+        "Remembering small details",
+        "Saying I love you",
+        "All are romantic",
+      ],
+      correct: 3,
+      points: 10,
+    },
+  ];
+
+  const [currentTrivia, setCurrentTrivia] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+
+  const playCookingGame = () => {
+    setGameActive(true);
+    setGameScore(0);
+    setGameTime(30);
+
+    const timer = setInterval(() => {
+      setGameTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setGameActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const playMemoryGame = () => {
+    setGameActive(true);
+    setGameScore(0);
+  };
+
+  const playTriviaGame = () => {
+    setGameActive(true);
+    setGameScore(0);
+    setCurrentTrivia(0);
+    setSelectedAnswer(null);
+  };
+
+  const playRhythmGame = () => {
+    setGameActive(true);
+    setGameScore(0);
+    setGameTime(20);
+
+    const timer = setInterval(() => {
+      setGameTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setGameActive(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const answerTrivia = (answerIndex) => {
+    setSelectedAnswer(answerIndex);
+    const question = triviaQuestions[currentTrivia];
+    if (answerIndex === question.correct) {
+      setGameScore((prev) => prev + question.points);
+    }
+
+    setTimeout(() => {
+      if (currentTrivia < triviaQuestions.length - 1) {
+        setCurrentTrivia((prev) => prev + 1);
+        setSelectedAnswer(null);
+      } else {
+        setGameActive(false);
+      }
+    }, 2000);
+  };
+
+  const finishMiniGame = () => {
+    const affectionGain = Math.floor(gameScore / 5);
+    setAffection((prev) => Math.min(100, prev + affectionGain));
+
+    const reactions = [
+      `That was so much fun! I love playing with you! +${affectionGain} affection 💕`,
+      `You're amazing at this game! I had such a great time! +${affectionGain} affection ✨`,
+      `Playing with you is the best! You make everything more fun! +${affectionGain} affection 🌟`,
+    ];
+
+    const randomReaction =
+      reactions[Math.floor(Math.random() * reactions.length)];
+    setDialogue(randomReaction);
+
+    setGameState("playing");
+    setMiniGame(null);
+    setGameActive(false);
+    setGameScore(0);
+    setGameTime(30);
+  };
+
+  // Memory System Functions
+  const addToMemory = (conversation) => {
+    setConversationMemory((prev) => [
+      ...prev,
+      {
+        ...conversation,
+        timestamp: Date.now(),
+        waifu: selectedWaifu,
+      },
+    ]);
+  };
+
+  // Theme Functions
+  const changeTheme = (themeId) => {
+    setCurrentTheme(themeId);
+    playSound("click");
+  };
+
+  // Outfit Functions
+  const changeOutfit = (outfitId) => {
+    if (unlockedOutfits.includes(outfitId) || outfitId === "default") {
+      setCurrentOutfit(outfitId);
+      playSound("click");
+    }
+  };
+
+  // Unlock outfit
+  const unlockOutfit = (outfitId) => {
+    if (!unlockedOutfits.includes(outfitId)) {
+      setUnlockedOutfits([...unlockedOutfits, outfitId]);
+      showAchievementNotification("outfit_unlocked");
+    }
+  };
+
+  // API endpoints for different moods - more accurate mapping
   const moodEndpoints = {
     happy: "happy",
     sad: "sad",
@@ -93,11 +752,17 @@ const YandereAIGame = () => {
     yandere: "cringe",
     shy: "blush",
     neutral: "waifu",
+    excited: "happy",
+    worried: "sad",
+    jealous: "angry",
+    loving: "happy",
+    disappointed: "sad",
+    playful: "happy",
   };
 
-  // Conversation database for each waifu
+  // Conversation database for each waifu type
   const conversationDatabase = {
-    aiko: [
+    sweet: [
       {
         id: 1,
         question: "Hi! I'm Aiko, your virtual waifu 💕. Wanna chat?",
@@ -349,7 +1014,7 @@ const YandereAIGame = () => {
         ],
       },
     ],
-    yuki: [
+    cheerful: [
       {
         id: 1,
         question: "Hi there! I'm Yuki! Ready for some fun? ❄️",
@@ -608,7 +1273,7 @@ const YandereAIGame = () => {
         ],
       },
     ],
-    sakura: [
+    shy: [
       {
         id: 1,
         question: "H-hello... I'm Sakura... *blushes* Nice to meet you... 🌸",
@@ -869,7 +1534,7 @@ const YandereAIGame = () => {
         ],
       },
     ],
-    mai: [
+    friendly: [
       {
         id: 1,
         question: "Hey there! I'm Mai! Ready to have some fun? ☀️",
@@ -1122,7 +1787,7 @@ const YandereAIGame = () => {
         ],
       },
     ],
-    hana: [
+    warm: [
       {
         id: 1,
         question: "Hello dear! I'm Hana! Welcome, make yourself at home! 🌺",
@@ -1390,20 +2055,607 @@ const YandereAIGame = () => {
         ],
       },
     ],
+    mysterious: [
+      {
+        id: 1,
+        question:
+          "Hello there... *mysterious smile* I'm Luna... You seem interesting... 🌙",
+        choices: [
+          {
+            text: "You're intriguing... tell me more about yourself",
+            effect: "affection",
+            value: 15,
+            response:
+              "Hmm... perhaps I will... but only if you prove worthy of my secrets~",
+          },
+          {
+            text: "You seem mysterious... I like that",
+            effect: "affection",
+            value: 20,
+            response:
+              "Do you now? *chuckles* I have many mysteries... care to discover them?",
+          },
+          {
+            text: "You're being too cryptic for me",
+            effect: "anger",
+            value: -10,
+            response:
+              "Cryptic? *smirks* You simply lack the depth to understand me...",
+          },
+        ],
+      },
+      {
+        id: 2,
+        question: "What draws you to the unknown?",
+        choices: [
+          {
+            text: "I love mysteries and secrets",
+            effect: "affection",
+            value: 25,
+            response:
+              "Fascinating... perhaps you're more interesting than I thought...",
+          },
+          {
+            text: "I prefer things to be straightforward",
+            effect: "neutral",
+            value: 5,
+            response:
+              "How... ordinary. But maybe I can teach you to appreciate the unknown...",
+          },
+          {
+            text: "I don't like not knowing things",
+            effect: "anger",
+            value: -15,
+            response:
+              "How disappointing... you're not ready for someone like me...",
+          },
+        ],
+      },
+      {
+        id: 3,
+        question: "Do you believe in fate?",
+        choices: [
+          {
+            text: "Yes, I believe everything happens for a reason",
+            effect: "affection",
+            value: 20,
+            response:
+              "Interesting... perhaps our meeting was destined... *mysterious smile*",
+          },
+          {
+            text: "I believe we make our own destiny",
+            effect: "affection",
+            value: 15,
+            response:
+              "Bold... I like that. But some things are beyond our control...",
+          },
+          {
+            text: "I don't believe in fate at all",
+            effect: "neutral",
+            value: 5,
+            response: "How... practical. But the universe has its ways...",
+          },
+        ],
+      },
+      {
+        id: 4,
+        question: "What would you do if I told you I have secrets too?",
+        choices: [
+          {
+            text: "I'd love to hear them",
+            effect: "affection",
+            value: 25,
+            response:
+              "Would you now? *leans closer* Perhaps we can share our secrets...",
+          },
+          {
+            text: "Everyone has secrets, it's normal",
+            effect: "neutral",
+            value: 10,
+            response: "Normal? *chuckles* My secrets are far from normal...",
+          },
+          {
+            text: "I don't care about your secrets",
+            effect: "anger",
+            value: -20,
+            response: "How... dismissive. You're not worthy of my attention...",
+          },
+        ],
+      },
+      {
+        id: 5,
+        question: "What's your biggest fear?",
+        choices: [
+          {
+            text: "Being forgotten and alone",
+            effect: "affection",
+            value: 20,
+            response:
+              "Ah... even mysterious ones fear loneliness... I understand...",
+          },
+          {
+            text: "Not being understood",
+            effect: "affection",
+            value: 15,
+            response:
+              "Yes... being truly understood is rare... perhaps you could be different...",
+          },
+          {
+            text: "I don't really have fears",
+            effect: "neutral",
+            value: 5,
+            response:
+              "How... confident. But everyone has something they fear...",
+          },
+        ],
+      },
+      {
+        id: 6,
+        question: "How do you show someone you care?",
+        choices: [
+          {
+            text: "Through subtle gestures and hints",
+            effect: "affection",
+            value: 25,
+            response:
+              "Exactly... the most meaningful things are often unspoken...",
+          },
+          {
+            text: "By being there when they need me",
+            effect: "affection",
+            value: 15,
+            response: "Loyalty... that's something I can respect...",
+          },
+          {
+            text: "I'm not very good at showing emotions",
+            effect: "neutral",
+            value: 5,
+            response: "Hmm... perhaps you're more like me than you think...",
+          },
+        ],
+      },
+      {
+        id: 7,
+        question: "What's your ideal date?",
+        choices: [
+          {
+            text: "A mysterious night under the stars",
+            effect: "affection",
+            value: 25,
+            response:
+              "Perfect... the night holds so many secrets... I'd love to share them with you...",
+          },
+          {
+            text: "Something adventurous and unknown",
+            effect: "affection",
+            value: 20,
+            response: "Adventure... yes... I know many hidden places...",
+          },
+          {
+            text: "A normal dinner date",
+            effect: "neutral",
+            value: 5,
+            response:
+              "Normal? *sighs* I suppose even mysterious ones need normalcy sometimes...",
+          },
+        ],
+      },
+      {
+        id: 8,
+        question: "How do you handle being misunderstood?",
+        choices: [
+          {
+            text: "I try to explain myself better",
+            effect: "affection",
+            value: 15,
+            response:
+              "Patient... I like that. Most people don't bother to understand...",
+          },
+          {
+            text: "I don't care what others think",
+            effect: "affection",
+            value: 10,
+            response:
+              "Independent... that's admirable... but sometimes understanding matters...",
+          },
+          {
+            text: "I get frustrated and give up",
+            effect: "neutral",
+            value: 5,
+            response:
+              "I understand... it can be tiring to always be misunderstood...",
+          },
+        ],
+      },
+      {
+        id: 9,
+        question: "What's the most mysterious thing about you?",
+        choices: [
+          {
+            text: "I have hidden depths you haven't seen",
+            effect: "affection",
+            value: 25,
+            response:
+              "Do you now? *mysterious smile* Perhaps we're more alike than I thought...",
+          },
+          {
+            text: "I'm not sure, what do you think?",
+            effect: "affection",
+            value: 15,
+            response:
+              "Hmm... there's something about you... something I can't quite place...",
+          },
+          {
+            text: "I'm pretty straightforward actually",
+            effect: "neutral",
+            value: 5,
+            response:
+              "Straightforward? *chuckles* Everyone has their mysteries...",
+          },
+        ],
+      },
+      {
+        id: 10,
+        question: "What do you hope for in the future?",
+        choices: [
+          {
+            text: "To find someone who truly understands me",
+            effect: "affection",
+            value: 30,
+            response:
+              "Understanding... yes... perhaps you could be that person... *mysterious smile*",
+          },
+          {
+            text: "To discover all the world's mysteries",
+            effect: "affection",
+            value: 20,
+            response:
+              "A fellow seeker... I like that... perhaps we could explore together...",
+          },
+          {
+            text: "I don't really think about the future",
+            effect: "neutral",
+            value: 5,
+            response: "Living in the moment... that's... interesting...",
+          },
+        ],
+      },
+    ],
   };
 
-  // Background music tracks (using royalty-free anime-style music)
+  // Background music tracks (lively anime-style music)
   const musicTracks = [
-    "https://www.bensound.com/bensound-music/bensound-romantic.mp3", // Romantic anime-style music
-    "https://www.bensound.com/bensound-music/bensound-sunny.mp3", // Upbeat and cheerful
-    "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3", // Mysterious and emotional
+    {
+      name: "Kawaii Pop Beat",
+      url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
+      mood: "kawaii",
+      description: "Super cute and energetic anime pop vibes",
+    },
+    {
+      name: "Love Story Theme",
+      url: "https://www.bensound.com/bensound-music/bensound-romantic.mp3",
+      mood: "romantic",
+      description: "Sweet and romantic anime love theme",
+    },
+    {
+      name: "Adventure Time",
+      url: "https://www.bensound.com/bensound-music/bensound-adventure.mp3",
+      mood: "adventurous",
+      description: "Exciting anime adventure soundtrack",
+    },
+    {
+      name: "Mysterious Night",
+      url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3",
+      mood: "mysterious",
+      description: "Mysterious and enchanting anime atmosphere",
+    },
+    {
+      name: "Happy School Days",
+      url: "https://www.bensound.com/bensound-music/bensound-happiness.mp3",
+      mood: "school",
+      description: "Upbeat school life anime theme",
+    },
+    {
+      name: "Dreamy Fantasy",
+      url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3",
+      mood: "fantasy",
+      description: "Magical and dreamy anime fantasy vibes",
+    },
+    {
+      name: "Cute Date",
+      url: "https://www.bensound.com/bensound-music/bensound-tenderness.mp3",
+      mood: "date",
+      description: "Sweet and cute anime date music",
+    },
+    {
+      name: "Epic Battle",
+      url: "https://www.bensound.com/bensound-music/bensound-newdawn.mp3",
+      mood: "epic",
+      description: "Intense anime battle/confrontation theme",
+    },
+    {
+      name: "Cherry Blossom",
+      url: "https://www.bensound.com/bensound-music/bensound-memories.mp3",
+      mood: "spring",
+      description: "Beautiful spring anime sakura vibes",
+    },
+    {
+      name: "Cyber Love",
+      url: "https://www.bensound.com/bensound-music/bensound-love.mp3",
+      mood: "cyber",
+      description: "Futuristic anime cyberpunk love theme",
+    },
   ];
 
-  // Play background music
-  const playBackgroundMusic = () => {
-    if (!musicEnabled || currentMusic) return;
+  // Achievement System
+  const achievementList = [
+    {
+      id: "first_love",
+      name: "First Love",
+      description: "Complete your first conversation",
+      icon: "💕",
+      unlocked: false,
+    },
+    {
+      id: "sweet_talker",
+      name: "Sweet Talker",
+      description: "Reach 80% affection",
+      icon: "🍯",
+      unlocked: false,
+    },
+    {
+      id: "yandere_master",
+      name: "Yandere Master",
+      description: "Trigger yandere mode 3 times",
+      icon: "😈",
+      unlocked: false,
+    },
+    {
+      id: "mystery_solver",
+      name: "Mystery Solver",
+      description: "Complete 5 conversations with Luna",
+      icon: "🔍",
+      unlocked: false,
+    },
+    {
+      id: "photo_enthusiast",
+      name: "Photo Enthusiast",
+      description: "Take 10 screenshots",
+      icon: "📸",
+      unlocked: false,
+    },
+    {
+      id: "date_expert",
+      name: "Date Expert",
+      description: "Go on 3 virtual dates",
+      icon: "💑",
+      unlocked: false,
+    },
+    {
+      id: "gift_giver",
+      name: "Gift Giver",
+      description: "Give 5 gifts to your waifu",
+      icon: "🎁",
+      unlocked: false,
+    },
+    {
+      id: "story_complete",
+      name: "Story Complete",
+      description: "Unlock all story endings",
+      icon: "🏆",
+      unlocked: false,
+    },
+  ];
 
-    const audio = new Audio(musicTracks[0]);
+  // Outfit System
+  const outfitList = {
+    default: {
+      name: "Default",
+      description: "Original outfit",
+      unlocked: true,
+      icon: "👗",
+    },
+    casual: {
+      name: "Casual",
+      description: "Comfy everyday wear",
+      unlocked: false,
+      icon: "👕",
+    },
+    formal: {
+      name: "Formal",
+      description: "Elegant evening wear",
+      unlocked: false,
+      icon: "👔",
+    },
+    school: {
+      name: "School Uniform",
+      description: "Classic school outfit",
+      unlocked: false,
+      icon: "🎓",
+    },
+    summer: {
+      name: "Summer Dress",
+      description: "Light and breezy",
+      unlocked: false,
+      icon: "🌻",
+    },
+    winter: {
+      name: "Winter Coat",
+      description: "Warm and cozy",
+      unlocked: false,
+      icon: "🧥",
+    },
+    party: {
+      name: "Party Dress",
+      description: "Sparkly and fun",
+      unlocked: false,
+      icon: "✨",
+    },
+    cyber: {
+      name: "Cyber Outfit",
+      description: "Futuristic style",
+      unlocked: false,
+      icon: "🤖",
+    },
+  };
+
+  // Theme System
+  const themeList = {
+    purple: {
+      name: "Purple Dreams",
+      colors: "from-purple-900 via-pink-800 to-purple-900",
+      icon: "💜",
+    },
+    blue: {
+      name: "Ocean Breeze",
+      colors: "from-blue-900 via-cyan-800 to-blue-900",
+      icon: "💙",
+    },
+    green: {
+      name: "Forest Magic",
+      colors: "from-green-900 via-emerald-800 to-green-900",
+      icon: "💚",
+    },
+    red: {
+      name: "Passionate Red",
+      colors: "from-red-900 via-rose-800 to-red-900",
+      icon: "❤️",
+    },
+    gold: {
+      name: "Golden Hour",
+      colors: "from-yellow-900 via-amber-800 to-yellow-900",
+      icon: "💛",
+    },
+    dark: {
+      name: "Midnight",
+      colors: "from-gray-900 via-slate-800 to-gray-900",
+      icon: "🌙",
+    },
+  };
+
+  // Gift System
+  const giftList = [
+    {
+      id: "chocolate",
+      name: "Chocolate",
+      description: "Sweet treat",
+      effect: "affection",
+      value: 10,
+      icon: "🍫",
+    },
+    {
+      id: "flowers",
+      name: "Flowers",
+      description: "Beautiful bouquet",
+      effect: "affection",
+      value: 15,
+      icon: "🌸",
+    },
+    {
+      id: "jewelry",
+      name: "Jewelry",
+      description: "Sparkly accessory",
+      effect: "affection",
+      value: 20,
+      icon: "💎",
+    },
+    {
+      id: "book",
+      name: "Book",
+      description: "Interesting read",
+      effect: "affection",
+      value: 8,
+      icon: "📚",
+    },
+    {
+      id: "plushie",
+      name: "Plushie",
+      description: "Cute stuffed animal",
+      effect: "affection",
+      value: 12,
+      icon: "🧸",
+    },
+    {
+      id: "cake",
+      name: "Cake",
+      description: "Delicious dessert",
+      effect: "affection",
+      value: 18,
+      icon: "🎂",
+    },
+  ];
+
+  // Date Locations
+  const dateLocations = [
+    {
+      id: "cafe",
+      name: "Cozy Cafe",
+      description: "Perfect for intimate conversations",
+      icon: "☕",
+    },
+    {
+      id: "park",
+      name: "Cherry Blossom Park",
+      description: "Romantic spring setting",
+      icon: "🌸",
+    },
+    {
+      id: "beach",
+      name: "Sunset Beach",
+      description: "Relaxing ocean view",
+      icon: "🏖️",
+    },
+    {
+      id: "school",
+      name: "School Rooftop",
+      description: "Classic anime location",
+      icon: "🏫",
+    },
+    {
+      id: "library",
+      name: "Quiet Library",
+      description: "Peaceful study spot",
+      icon: "📖",
+    },
+    {
+      id: "garden",
+      name: "Secret Garden",
+      description: "Mysterious and enchanting",
+      icon: "🌹",
+    },
+  ];
+
+  // Mini-Games
+  const miniGames = {
+    cooking: {
+      name: "Cooking Together",
+      description: "Cook a meal with your waifu",
+      icon: "👨‍🍳",
+    },
+    memory: {
+      name: "Memory Match",
+      description: "Find matching pairs",
+      icon: "🧠",
+    },
+    trivia: {
+      name: "Love Trivia",
+      description: "Test your knowledge",
+      icon: "❓",
+    },
+    rhythm: { name: "Rhythm Game", description: "Tap to the beat", icon: "🎵" },
+  };
+
+  // Play background music
+  const playBackgroundMusic = (trackIndex = selectedMusicTrack) => {
+    if (!musicEnabled) return;
+
+    // Stop current music if playing
+    if (currentMusic) {
+      currentMusic.pause();
+      currentMusic.currentTime = 0;
+    }
+
+    const audio = new Audio(musicTracks[trackIndex].url);
     audio.loop = true;
     audio.volume = 0.3;
     audio.play().catch((e) => console.log("Music autoplay prevented:", e));
@@ -1435,27 +2687,63 @@ const YandereAIGame = () => {
     setLoading(false);
   };
 
-  // Select waifu and start conversation
-  const selectWaifu = async (waifuKey) => {
-    const waifu = waifus[waifuKey];
-    setSelectedWaifu(waifuKey);
-    setGameState("playing");
-    setMood("neutral");
-    setAffection(50);
-    setConversationCount(0);
-    setConversationHistory([]);
+  // Get greeting image for landing page
+  const getGreetingImage = async () => {
+    try {
+      const response = await fetch("https://api.waifu.pics/sfw/waifu");
+      const data = await response.json();
+      setGreetingImage(data.url);
+    } catch (error) {
+      console.error("Error fetching greeting image:", error);
+      setGreetingImage("https://api.waifu.pics/sfw/waifu");
+    }
+  };
 
-    // Get first conversation
-    const firstConversation = conversationDatabase[waifuKey][0];
-    setDialogue(firstConversation.question);
-    setChoices(firstConversation.choices);
+  // Select waifu type and start conversation
+  const selectWaifuType = async (waifuTypeKey) => {
+    try {
+      console.log("Selecting waifu type:", waifuTypeKey);
+      const waifuType = waifuTypes[waifuTypeKey];
+      console.log("Waifu type found:", waifuType);
 
-    await getMoodImage("neutral");
-    playBackgroundMusic();
+      if (!waifuType) {
+        console.error("Invalid waifu type:", waifuTypeKey);
+        return;
+      }
+
+      setSelectedWaifu(waifuTypeKey);
+      setGameState("playing");
+      setMood("neutral");
+      setAffection(50);
+      setConversationCount(0);
+      setConversationHistory([]);
+
+      // Get first conversation
+      const firstConversation = conversationDatabase[waifuTypeKey]?.[0];
+      console.log("First conversation:", firstConversation);
+
+      if (firstConversation) {
+        setDialogue(firstConversation.question);
+        setChoices(firstConversation.choices);
+      } else {
+        console.error("No conversation found for waifu type:", waifuTypeKey);
+        setDialogue("Hello! I'm ready to chat with you!");
+        setChoices([]);
+      }
+
+      await getMoodImage("neutral");
+      playBackgroundMusic();
+    } catch (error) {
+      console.error("Error in selectWaifuType:", error);
+      // Fallback to prevent blank screen
+      setDialogue("Hello! I'm ready to chat with you!");
+      setChoices([]);
+    }
   };
 
   // Initialize game
   const initializeGame = async () => {
+    console.log("Initializing game, setting state to waifuSelect");
     setGameState("waifuSelect");
   };
 
@@ -1469,6 +2757,9 @@ const YandereAIGame = () => {
       affection: affection,
     };
     setConversationHistory((prev) => [...prev, newEntry]);
+
+    // Add to memory system
+    addToMemory(newEntry);
 
     // Update dialogue
     setDialogue(choice.response);
@@ -1486,18 +2777,68 @@ const YandereAIGame = () => {
 
     // Check if conversation is complete (10 questions)
     if (newCount >= 10) {
+      // Set appropriate ending based on final affection level
+      let endingMood = "neutral";
+      let endingDialogue = "";
+
+      if (affection >= 90) {
+        endingMood = "happy";
+        endingDialogue =
+          "I love you so much! You're my everything! Let's be together forever! ♡♡♡";
+      } else if (affection >= 70) {
+        endingMood = "happy";
+        endingDialogue =
+          "I'm so happy we got to talk! I really enjoyed our conversation! ♡";
+      } else if (affection >= 50) {
+        endingMood = "neutral";
+        endingDialogue =
+          "That was nice talking with you. I hope we can chat again sometime.";
+      } else if (affection >= 30) {
+        endingMood = "sad";
+        endingDialogue = "I... I guess our conversation is over. Take care...";
+      } else {
+        endingMood = "sad";
+        endingDialogue =
+          "I think we should end this conversation here. Goodbye.";
+      }
+
+      setMood(endingMood);
+      setDialogue(endingDialogue);
+      await getMoodImage(endingMood);
       setGameState("ended");
       return;
     }
 
-    // Determine new mood based on choice and current state
+    // Determine new mood based on choice, current state, and affection level
     let newMood = mood;
-    if (choice.effect === "affection" && affection > 70) {
-      newMood = "happy";
-    } else if (choice.effect === "anger" && affection < 30) {
-      newMood = "angry";
+
+    // More nuanced mood determination
+    if (choice.effect === "affection") {
+      if (affection > 80) {
+        newMood = "loving";
+      } else if (affection > 60) {
+        newMood = "happy";
+      } else if (affection > 40) {
+        newMood = "excited";
+      } else {
+        newMood = "shy";
+      }
+    } else if (choice.effect === "anger") {
+      if (affection < 20) {
+        newMood = "angry";
+      } else if (affection < 40) {
+        newMood = "jealous";
+      } else {
+        newMood = "worried";
+      }
     } else if (choice.effect === "neutral") {
-      newMood = "shy";
+      if (affection > 50) {
+        newMood = "playful";
+      } else {
+        newMood = "shy";
+      }
+    } else if (choice.effect === "sad") {
+      newMood = "disappointed";
     }
 
     // Special triggers for yandere behavior
@@ -1527,6 +2868,9 @@ const YandereAIGame = () => {
 
     setMood(newMood);
     await getMoodImage(newMood);
+
+    // Play mood-specific sound effect
+    playMoodSound(newMood);
 
     // Get next conversation
     if (selectedWaifu && conversationDatabase[selectedWaifu]) {
@@ -1681,33 +3025,6 @@ const YandereAIGame = () => {
     setChoices(newChoices);
   };
 
-  // Check for game ending
-  useEffect(() => {
-    if (affection >= 90) {
-      setGameState("ended");
-      setDialogue(
-        "I love you so much! You're my everything! Let's be together forever! ♡♡♡"
-      );
-      setMood("happy");
-    } else if (affection <= 10) {
-      setGameState("ended");
-      setDialogue(
-        "I... I think we should end this conversation here. Goodbye."
-      );
-      setMood("sad");
-    }
-  }, [affection]);
-
-  // Cleanup music on unmount
-  useEffect(() => {
-    return () => {
-      if (currentMusic) {
-        currentMusic.pause();
-        currentMusic.currentTime = 0;
-      }
-    };
-  }, [currentMusic]);
-
   // Get mood color for UI
   const getMoodColor = () => {
     switch (mood) {
@@ -1776,6 +3093,340 @@ const YandereAIGame = () => {
     oscillator.stop(audioContext.currentTime + 0.3);
   };
 
+  // Play mood-specific sound effects
+  const playMoodSound = (moodType) => {
+    if (!soundEnabled) return;
+
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    switch (moodType) {
+      case "happy":
+      case "loving":
+      case "excited":
+        // High, cheerful sound
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          1200,
+          audioContext.currentTime + 0.2
+        );
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.4
+        );
+        break;
+      case "sad":
+      case "disappointed":
+        // Low, melancholic sound
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          200,
+          audioContext.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.5
+        );
+        break;
+      case "angry":
+      case "jealous":
+        // Sharp, aggressive sound
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          1200,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.2
+        );
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.3
+        );
+        break;
+      case "yandere":
+        // Distorted, unsettling sound
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          200,
+          audioContext.currentTime + 0.2
+        );
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.4
+        );
+        break;
+      case "shy":
+      case "worried":
+        // Soft, gentle sound
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          600,
+          audioContext.currentTime + 0.2
+        );
+        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.3
+        );
+        break;
+      case "playful":
+        // Bouncy, fun sound
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.4
+        );
+        break;
+      default:
+        // Neutral sound
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.2
+        );
+    }
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.5);
+  };
+
+  // Play ending-specific sound effects (more expressive)
+  const playEndingSound = (moodType, affectionLevel) => {
+    if (!soundEnabled) return;
+
+    const audioContext = new (window.AudioContext ||
+      window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    switch (moodType) {
+      case "happy":
+      case "loving":
+        if (affectionLevel >= 90) {
+          // Giggling sound - multiple quick ascending notes
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(
+            1000,
+            audioContext.currentTime + 0.1
+          );
+          oscillator.frequency.setValueAtTime(
+            1200,
+            audioContext.currentTime + 0.2
+          );
+          oscillator.frequency.setValueAtTime(
+            1000,
+            audioContext.currentTime + 0.3
+          );
+          oscillator.frequency.setValueAtTime(
+            1200,
+            audioContext.currentTime + 0.4
+          );
+          gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.6
+          );
+        } else {
+          // Happy sigh
+          oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(
+            400,
+            audioContext.currentTime + 0.4
+          );
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.5
+          );
+        }
+        break;
+      case "sad":
+      case "disappointed":
+        // Soft crying/whimpering sound
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          250,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          300,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          250,
+          audioContext.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.6
+        );
+        break;
+      case "angry":
+      case "jealous":
+        // Angry huff/growl
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          400,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          200,
+          audioContext.currentTime + 0.4
+        );
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.5
+        );
+        break;
+      case "yandere":
+        // Maniacal laugh
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.3
+        );
+        oscillator.frequency.setValueAtTime(
+          400,
+          audioContext.currentTime + 0.4
+        );
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.7
+        );
+        break;
+      case "shy":
+      case "worried":
+        // Shy giggle
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          500,
+          audioContext.currentTime + 0.2
+        );
+        gainNode.gain.setValueAtTime(0.06, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.4
+        );
+        break;
+      case "excited":
+        // Excited squeal
+        oscillator.frequency.setValueAtTime(1000, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          1200,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          1400,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          1200,
+          audioContext.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.5
+        );
+        break;
+      case "playful":
+        // Playful laugh
+        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.1
+        );
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.2
+        );
+        oscillator.frequency.setValueAtTime(
+          800,
+          audioContext.currentTime + 0.3
+        );
+        oscillator.frequency.setValueAtTime(
+          600,
+          audioContext.currentTime + 0.4
+        );
+        gainNode.gain.setValueAtTime(0.12, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.6
+        );
+        break;
+      default:
+        // Neutral sigh
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(
+          400,
+          audioContext.currentTime + 0.3
+        );
+        gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.4
+        );
+    }
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.8);
+  };
+
+  // Debug render
+  console.log(
+    "Component rendering with gameState:",
+    gameState,
+    "showSettings:",
+    showSettings
+  );
+
   // Settings screen (should be checked first)
   if (showSettings) {
     return (
@@ -1836,6 +3487,42 @@ const YandereAIGame = () => {
                   ></div>
                 </button>
               </div>
+
+              {/* Music Track Selection */}
+              <div className="space-y-4">
+                <h3 className="text-white text-lg font-semibold">
+                  Music Track
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {musicTracks.map((track, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setSelectedMusicTrack(index);
+                        if (musicEnabled) {
+                          playBackgroundMusic(index);
+                        }
+                        playSound("click");
+                      }}
+                      className={`p-3 rounded-lg text-left transition-all duration-300 ${
+                        selectedMusicTrack === index
+                          ? "bg-pink-500/30 border-2 border-pink-400"
+                          : "bg-white/10 hover:bg-white/20 border border-white/20"
+                      }`}
+                    >
+                      <div className="text-white font-semibold text-sm">
+                        {track.name}
+                      </div>
+                      <div className="text-purple-200 text-xs mt-1">
+                        {track.description}
+                      </div>
+                      <div className="text-purple-300 text-xs mt-1">
+                        Mood: {track.mood}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1847,7 +3534,7 @@ const YandereAIGame = () => {
   if (gameState === "start") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-purple-900 flex items-center justify-center p-4">
-        <div className="text-center max-w-2xl mx-auto">
+        <div className="text-center max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-6xl font-bold text-white mb-4 animate-pulse text-gradient">
               Yandere AI: Love.exe
@@ -1855,6 +3542,51 @@ const YandereAIGame = () => {
             <p className="text-xl text-purple-200 mb-8">
               A virtual waifu experience where your choices matter
             </p>
+          </div>
+
+          {/* Waifu Greeting Section */}
+          <div className="mb-8 bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-shrink-0">
+                {greetingImage ? (
+                  <img
+                    src={greetingImage}
+                    alt="Waifu Greeting"
+                    className="w-32 h-32 object-cover rounded-full shadow-2xl border-4 border-white/20"
+                    style={{
+                      objectPosition: "center top",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  </div>
+                )}
+              </div>
+              <div className="text-left">
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Welcome, Master! 💕
+                </h2>
+                <p className="text-purple-200 text-lg leading-relaxed">
+                  I've been waiting for you... Your virtual waifu is ready to
+                  meet you! Choose your perfect companion and let our love story
+                  begin. Every choice you make will shape our relationship and
+                  my feelings towards you.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="bg-pink-500/20 text-pink-200 text-xs px-3 py-1 rounded-full">
+                    💖 Romantic
+                  </span>
+                  <span className="bg-purple-500/20 text-purple-200 text-xs px-3 py-1 rounded-full">
+                    🎭 Interactive
+                  </span>
+                  <span className="bg-blue-500/20 text-blue-200 text-xs px-3 py-1 rounded-full">
+                    🎵 Immersive
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -1896,6 +3628,9 @@ const YandereAIGame = () => {
 
   // Waifu selection screen
   if (gameState === "waifuSelect") {
+    console.log("Rendering waifu selection screen");
+    console.log("waifuTypes:", waifuTypes);
+    console.log("waifuTypes entries:", Object.entries(waifuTypes));
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-purple-900 p-4">
         <div className="max-w-6xl mx-auto">
@@ -1916,28 +3651,28 @@ const YandereAIGame = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.entries(waifus).map(([key, waifu]) => (
+            {Object.entries(waifuTypes).map(([key, waifuType]) => (
               <div
                 key={key}
                 className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105 cursor-pointer"
                 onClick={() => {
-                  selectWaifu(key);
+                  selectWaifuType(key);
                   playSound("click");
                 }}
               >
                 <div className="text-center">
-                  <div className="text-6xl mb-4">{waifu.icon}</div>
+                  <div className="text-6xl mb-4">{waifuType.icon}</div>
                   <h3 className="text-2xl font-bold text-white mb-2">
-                    {waifu.name}
+                    {waifuType.name}
                   </h3>
                   <p className="text-purple-200 font-semibold mb-2">
-                    {waifu.personality}
+                    {waifuType.personality}
                   </p>
                   <p className="text-purple-300 text-sm mb-4">
-                    {waifu.description}
+                    {waifuType.description}
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    {waifu.traits.map((trait, index) => (
+                    {waifuType.traits.map((trait, index) => (
                       <span
                         key={index}
                         className="bg-white/20 text-white text-xs px-2 py-1 rounded-full"
@@ -1957,7 +3692,13 @@ const YandereAIGame = () => {
 
   // Game ended screen
   if (gameState === "ended") {
-    const currentWaifu = selectedWaifu ? waifus[selectedWaifu] : null;
+    console.log(
+      "Rendering ending screen with mood:",
+      mood,
+      "affection:",
+      affection
+    );
+    const currentWaifu = selectedWaifu ? waifuTypes[selectedWaifu] : null;
 
     const getEndingMessage = () => {
       if (affection >= 90) {
@@ -2026,6 +3767,51 @@ const YandereAIGame = () => {
             </h1>
             <p className="text-xl text-white mb-4">{ending.message}</p>
             <p className="text-lg text-purple-200 mb-6">"{dialogue}"</p>
+
+            {/* Waifu Sound Effect Description */}
+            <div className="mb-4 text-center">
+              {mood === "happy" || mood === "loving" ? (
+                <p className="text-pink-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} giggles
+                  happily* 💕
+                </p>
+              ) : mood === "sad" || mood === "disappointed" ? (
+                <p className="text-blue-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} sniffles
+                  softly* 😢
+                </p>
+              ) : mood === "angry" || mood === "jealous" ? (
+                <p className="text-red-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} huffs
+                  angrily* 😠
+                </p>
+              ) : mood === "yandere" ? (
+                <p className="text-red-400 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} laughs
+                  maniacally* 😈
+                </p>
+              ) : mood === "shy" || mood === "worried" ? (
+                <p className="text-purple-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} giggles
+                  shyly* 😊
+                </p>
+              ) : mood === "excited" ? (
+                <p className="text-yellow-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} squeals
+                  excitedly* ⭐
+                </p>
+              ) : mood === "playful" ? (
+                <p className="text-green-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} laughs
+                  playfully* 😄
+                </p>
+              ) : (
+                <p className="text-gray-300 text-sm italic">
+                  *{waifuTypes[selectedWaifu]?.name || "Your waifu"} sighs
+                  softly* 😌
+                </p>
+              )}
+            </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20">
               <h3 className="text-lg font-semibold text-white mb-3">
                 Conversation Analysis
@@ -2107,161 +3893,744 @@ const YandereAIGame = () => {
   }
 
   // Main game screen
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-purple-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => {
-                setGameState("start");
-                stopBackgroundMusic();
-              }}
-              className="text-purple-300 hover:text-white transition-colors"
-            >
-              <Home className="w-6 h-6" />
-            </button>
-            <h1 className="text-2xl font-bold text-white">
-              Yandere AI: Love.exe
-            </h1>
-            {selectedWaifu && (
-              <div className="flex items-center space-x-2">
-                <span className="text-purple-300">with</span>
-                <span className="text-pink-300 font-semibold">
-                  {waifus[selectedWaifu]?.name}
-                </span>
-              </div>
-            )}
+  console.log(
+    "Rendering main game screen with gameState:",
+    gameState,
+    "selectedWaifu:",
+    selectedWaifu
+  );
+
+  // Safety check - if no valid waifu selected, go back to selection
+  // Temporarily disabled for debugging
+  // if (
+  //   gameState === "playing" &&
+  //   (!selectedWaifu || !waifuTypes[selectedWaifu])
+  // ) {
+  //   console.log("Invalid waifu selected, returning to selection screen");
+  //   console.log("selectedWaifu:", selectedWaifu);
+  //   console.log("waifuTypes keys:", Object.keys(waifuTypes));
+  //   console.log("waifuTypes[selectedWaifu]:", waifuTypes[selectedWaifu]);
+  //   setGameState("waifuSelect");
+  //   return null;
+  // }
+
+  // Show loading state while image is loading
+  if (gameState === "playing" && loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-purple-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Loading your waifu...
+          </h2>
+          <p className="text-purple-200">
+            Please wait while we prepare your conversation.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Date screen
+  if (gameState === "date") {
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">Virtual Date</h1>
+            <p className="text-purple-200 text-xl">{dateLocation?.name}</p>
+            <p className="text-purple-300">{dateLocation?.description}</p>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              {getMoodIcon()}
-              <span className="text-white capitalize">{mood}</span>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Date Scene */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8 text-center">
+              <div className="text-6xl mb-4">{dateLocation?.icon}</div>
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Date with {waifuTypes[selectedWaifu]?.name}
+              </h2>
+              <p className="text-purple-200 mb-6">{dialogue}</p>
+
+              {/* Affection Display */}
+              <div className="flex items-center justify-center space-x-2 mb-6">
+                <Heart className="w-6 h-6 text-pink-400" />
+                <span className="text-white text-lg">{affection}%</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Heart
-                className={`w-5 h-5 text-pink-400 ${
-                  affection > 70 ? "heart-beat" : ""
-                }`}
-              />
-              <span className="text-white">{affection}%</span>
+
+            {/* Date Activities */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+              <h3 className="text-xl font-bold text-white mb-4">
+                What would you like to do?
+              </h3>
+              <div className="space-y-3">
+                {dateActivities[dateLocation?.id]?.map((activity, index) => (
+                  <button
+                    key={index}
+                    onClick={() => doDateActivity(activity)}
+                    className="w-full bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg p-4 text-left transition-all duration-300 hover:scale-105"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="text-white font-semibold">
+                          {activity.name}
+                        </h4>
+                        <p className="text-purple-200 text-sm">
+                          {activity.description}
+                        </p>
+                      </div>
+                      <div className="text-green-400 text-sm font-bold">
+                        +{activity.affection}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={() => {
+                    setGameState("playing");
+                    setDateLocation(null);
+                  }}
+                  className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg"
+                >
+                  Continue Date
+                </button>
+                <button
+                  onClick={() => {
+                    setGameState("playing");
+                    setDateLocation(null);
+                  }}
+                  className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg"
+                >
+                  End Date
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <MessageCircle className="w-5 h-5 text-blue-400" />
-              <span className="text-white">{conversationCount}/10</span>
-            </div>
-            <button
-              onClick={() => {
-                setShowSettings(true);
-                playSound("click");
-              }}
-              className="text-purple-300 hover:text-white transition-colors"
-            >
-              <Settings className="w-6 h-6" />
-            </button>
           </div>
         </div>
+      </div>
+    );
+  }
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Character Image */}
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              {loading ? (
-                <div className="w-80 h-80 bg-white/10 rounded-full flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
-                </div>
-              ) : (
-                <img
-                  src={currentImage}
-                  alt="Aiko"
-                  className={`w-80 h-80 object-cover rounded-full shadow-2xl border-4 border-white/20 transition-all duration-500 mood-${mood}`}
-                />
-              )}
-              <div
-                className={`absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r ${getMoodColor()} px-4 py-2 rounded-full text-white font-semibold text-sm shadow-lg`}
-              >
-                Aiko
-              </div>
-            </div>
+  // Mini-game screen
+  if (gameState === "minigame") {
+    const renderGameContent = () => {
+      if (!gameActive) {
+        return (
+          <div className="text-center">
+            <div className="text-6xl mb-4">{miniGames[miniGame]?.icon}</div>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Playing {miniGames[miniGame]?.name} with{" "}
+              {waifuTypes[selectedWaifu]?.name}
+            </h2>
+            <p className="text-purple-200 mb-6">
+              {miniGames[miniGame]?.description}
+            </p>
+            <button
+              onClick={() => {
+                if (miniGame === "cooking") playCookingGame();
+                else if (miniGame === "memory") playMemoryGame();
+                else if (miniGame === "trivia") playTriviaGame();
+                else if (miniGame === "rhythm") playRhythmGame();
+              }}
+              className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Start Game
+            </button>
           </div>
+        );
+      }
 
-          {/* Dialogue and Choices */}
-          <div className="space-y-6">
-            {/* Dialogue Box */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 glass">
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold animate-pulse-slow">
-                  A
-                </div>
-                <div className="flex-1">
-                  <p className="text-white text-lg leading-relaxed">
-                    {dialogue}
-                  </p>
-                </div>
-              </div>
+      // Cooking Game
+      if (miniGame === "cooking") {
+        return (
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Cooking Together! 👨‍🍳
+            </h3>
+            <div className="mb-4">
+              <p className="text-purple-200">Score: {gameScore}</p>
+              <p className="text-purple-200">Time: {gameTime}s</p>
             </div>
-
-            {/* Choices */}
-            <div className="space-y-3">
-              {choices.map((choice, index) => (
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {cookingGame.ingredients.map((ingredient, index) => (
                 <button
                   key={index}
-                  onClick={() => {
-                    handleChoice(choice);
-                    playSound("click");
-                  }}
-                  className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg p-4 text-left text-white transition-all duration-300 transform hover:scale-105 border border-white/20 hover:border-white/40 btn-anime"
+                  onClick={() => setGameScore((prev) => prev + 1)}
+                  className="bg-white/20 hover:bg-white/30 p-4 rounded-lg text-2xl"
                 >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <span className="text-lg">{choice.text}</span>
-                  </div>
+                  {ingredient}
                 </button>
               ))}
             </div>
-
-            {/* Affection Bar */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-semibold">
-                  Affection Level
-                </span>
-                <span className="text-white">{affection}%</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full bg-gradient-to-r ${getMoodColor()} transition-all duration-500`}
-                  style={{ width: `${affection}%` }}
-                ></div>
-              </div>
-            </div>
+            <p className="text-purple-200 text-sm mb-4">
+              Click ingredients to cook! Try to make recipes for bonus points!
+            </p>
+            {gameTime === 0 && (
+              <button
+                onClick={finishMiniGame}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"
+              >
+                Finish Cooking
+              </button>
+            )}
           </div>
-        </div>
+        );
+      }
 
-        {/* Conversation History */}
-        {conversationHistory.length > 0 && (
-          <div className="mt-8 bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-            <h3 className="text-white font-semibold mb-4">
-              Conversation History
+      // Memory Game
+      if (miniGame === "memory") {
+        return (
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Memory Match! 🧠
             </h3>
-            <div className="space-y-2 max-h-40 overflow-y-auto">
-              {conversationHistory.slice(-5).map((entry, index) => (
-                <div key={index} className="text-sm text-purple-200">
-                  <span className="font-semibold">You:</span> {entry.player}
-                  <br />
-                  <span className="font-semibold">
-                    {waifus[selectedWaifu]?.name || "Waifu"}:
-                  </span>{" "}
-                  {entry.waifu}
-                </div>
+            <div className="mb-4">
+              <p className="text-purple-200">Score: {gameScore}</p>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {memoryGame.cards.map((card, index) => (
+                <button
+                  key={index}
+                  onClick={() => setGameScore((prev) => prev + 1)}
+                  className="bg-white/20 hover:bg-white/30 p-4 rounded-lg text-2xl"
+                >
+                  {card}
+                </button>
               ))}
             </div>
+            <p className="text-purple-200 text-sm mb-4">
+              Find matching pairs! Click cards to flip them!
+            </p>
+            <button
+              onClick={finishMiniGame}
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"
+            >
+              Finish Game
+            </button>
           </div>
-        )}
+        );
+      }
+
+      // Trivia Game
+      if (miniGame === "trivia") {
+        const question = triviaQuestions[currentTrivia];
+        return (
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Love Trivia! ❓
+            </h3>
+            <div className="mb-4">
+              <p className="text-purple-200">Score: {gameScore}</p>
+              <p className="text-purple-200">
+                Question {currentTrivia + 1} of {triviaQuestions.length}
+              </p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-6 mb-4">
+              <h4 className="text-lg font-bold text-white mb-4">
+                {question.question}
+              </h4>
+              <div className="space-y-2">
+                {question.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => answerTrivia(index)}
+                    className={`w-full p-3 rounded-lg transition-all duration-300 ${
+                      selectedAnswer === index
+                        ? index === question.correct
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                        : "bg-white/10 hover:bg-white/20"
+                    }`}
+                    disabled={selectedAnswer !== null}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {selectedAnswer !== null && (
+              <button
+                onClick={finishMiniGame}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"
+              >
+                Finish Trivia
+              </button>
+            )}
+          </div>
+        );
+      }
+
+      // Rhythm Game
+      if (miniGame === "rhythm") {
+        return (
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Rhythm Game! 🎵
+            </h3>
+            <div className="mb-4">
+              <p className="text-purple-200">Score: {gameScore}</p>
+              <p className="text-purple-200">Time: {gameTime}s</p>
+            </div>
+            <div className="mb-4">
+              <button
+                onClick={() => setGameScore((prev) => prev + 1)}
+                className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-4 px-8 rounded-full text-2xl"
+              >
+                TAP!
+              </button>
+            </div>
+            <p className="text-purple-200 text-sm mb-4">
+              Tap the button to the beat! Follow the rhythm!
+            </p>
+            {gameTime === 0 && (
+              <button
+                onClick={finishMiniGame}
+                className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg"
+              >
+                Finish Rhythm
+              </button>
+            )}
+          </div>
+        );
+      }
+    };
+
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">Mini-Game</h1>
+            <p className="text-purple-200 text-xl">
+              {miniGames[miniGame]?.name}
+            </p>
+          </div>
+
+          {/* Back Button */}
+          <div className="mb-6">
+            <button
+              onClick={() => {
+                setGameState("playing");
+                setMiniGame(null);
+                setGameActive(false);
+                setGameScore(0);
+                setGameTime(30);
+                playSound("click");
+              }}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center space-x-2"
+            >
+              <span>←</span>
+              <span>Back to Game</span>
+            </button>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8">
+            {renderGameContent()}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Date Selection Screen
+  if (gameState === "dateSelect") {
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Choose Date Location
+            </h1>
+            <p className="text-purple-200">
+              Where would you like to go on a date with{" "}
+              {waifuTypes[selectedWaifu]?.name}?
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {dateLocations.map((location) => (
+              <div
+                key={location.id}
+                onClick={() => startDate(location.id)}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+              >
+                <div className="text-center">
+                  <div className="text-6xl mb-4">{location.icon}</div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {location.name}
+                  </h3>
+                  <p className="text-purple-200 text-sm">
+                    {location.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setGameState("playing")}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Back to Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mini-Game Selection Screen
+  if (gameState === "minigameSelect") {
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Choose Mini-Game
+            </h1>
+            <p className="text-purple-200">
+              What would you like to play with {waifuTypes[selectedWaifu]?.name}
+              ?
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Object.entries(miniGames).map(([id, game]) => (
+              <div
+                key={id}
+                onClick={() => startMiniGame(id)}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+              >
+                <div className="text-center">
+                  <div className="text-6xl mb-4">{game.icon}</div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {game.name}
+                  </h3>
+                  <p className="text-purple-200 text-sm">{game.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setGameState("playing")}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Back to Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Gift Selection Screen
+  if (gameState === "giftSelect") {
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">Choose Gift</h1>
+            <p className="text-purple-200">
+              What would you like to give to {waifuTypes[selectedWaifu]?.name}?
+            </p>
+            <p className="text-purple-300 text-sm mt-2">
+              Each gift will give a unique reaction based on your waifu's
+              personality!
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {giftList.map((gift) => (
+              <div
+                key={gift.id}
+                onClick={() => {
+                  giveGift(gift.id);
+                  setGameState("playing");
+                }}
+                className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105 cursor-pointer group"
+              >
+                <div className="text-center">
+                  <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    {gift.icon}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {gift.name}
+                  </h3>
+                  <p className="text-purple-200 text-sm mb-2">
+                    {gift.description}
+                  </p>
+                  <div className="flex justify-center items-center space-x-2 mb-2">
+                    <Heart className="w-4 h-4 text-pink-400" />
+                    <p className="text-green-400 text-sm font-bold">
+                      +{gift.value} Affection
+                    </p>
+                  </div>
+                  <div className="text-xs text-purple-300">
+                    {waifuTypes[selectedWaifu]?.name} will love this!
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <button
+              onClick={() => setGameState("playing")}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg"
+            >
+              Back to Conversation
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main game screen
+  if (gameState === "playing") {
+    console.log(
+      "Rendering main game screen - gameState:",
+      gameState,
+      "selectedWaifu:",
+      selectedWaifu
+    );
+    return (
+      <div
+        className={`min-h-screen bg-gradient-to-br ${themeList[currentTheme].colors} p-4`}
+      >
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => {
+                  setGameState("start");
+                  stopBackgroundMusic();
+                }}
+                className="text-purple-300 hover:text-white transition-colors"
+              >
+                <Home className="w-6 h-6" />
+              </button>
+              <h1 className="text-2xl font-bold text-white">
+                Yandere AI: Love.exe
+              </h1>
+              {selectedWaifu && waifuTypes[selectedWaifu] && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-purple-300">with</span>
+                  <span className="text-pink-300 font-semibold">
+                    {waifuTypes[selectedWaifu].name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                {getMoodIcon()}
+                <span className="text-white capitalize">{mood}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Heart
+                  className={`w-5 h-5 text-pink-400 ${
+                    affection > 70 ? "heart-beat" : ""
+                  }`}
+                />
+                <span className="text-white">{affection}%</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <MessageCircle className="w-5 h-5 text-blue-400" />
+                <span className="text-white">{conversationCount}/10</span>
+              </div>
+
+              {/* New Feature Buttons */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={takeScreenshot}
+                  className="text-purple-300 hover:text-white transition-colors"
+                  title="Take Screenshot"
+                >
+                  <span className="text-xl">📸</span>
+                </button>
+                <button
+                  onClick={() => setGameState("dateSelect")}
+                  className="text-purple-300 hover:text-white transition-colors"
+                  title="Go on a Date"
+                >
+                  <span className="text-xl">💑</span>
+                </button>
+                <button
+                  onClick={() => setGameState("minigameSelect")}
+                  className="text-purple-300 hover:text-white transition-colors"
+                  title="Play Mini-Game"
+                >
+                  <span className="text-xl">🎮</span>
+                </button>
+                <button
+                  onClick={() => setGameState("giftSelect")}
+                  className="text-purple-300 hover:text-white transition-colors"
+                  title="Give Gift"
+                >
+                  <span className="text-xl">🎁</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSettings(true);
+                    playSound("click");
+                  }}
+                  className="text-purple-300 hover:text-white transition-colors"
+                >
+                  <Settings className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Character Image */}
+            <div className="flex flex-col items-center">
+              <div className="relative">
+                {loading ? (
+                  <div className="w-80 h-80 bg-white/10 rounded-full flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white"></div>
+                  </div>
+                ) : (
+                  <img
+                    src={currentImage}
+                    alt={waifuTypes[selectedWaifu]?.name || "Your Waifu"}
+                    className={`w-80 h-80 object-cover rounded-full shadow-2xl border-4 border-white/20 transition-all duration-500 mood-${mood}`}
+                    style={{
+                      objectPosition: "center top",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+                <div
+                  className={`absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r ${getMoodColor()} px-4 py-2 rounded-full text-white font-semibold text-sm shadow-lg`}
+                >
+                  {waifuTypes[selectedWaifu]?.name || "Your Waifu"}
+                </div>
+              </div>
+            </div>
+
+            {/* Dialogue and Choices */}
+            <div className="space-y-6">
+              {/* Dialogue Box */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 border border-white/20 glass">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold animate-pulse-slow">
+                    {waifuTypes[selectedWaifu]?.name?.charAt(0) || "W"}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white text-lg leading-relaxed">
+                      {dialogue}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Choices */}
+              <div className="space-y-3">
+                {choices.map((choice, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      handleChoice(choice);
+                      playSound("click");
+                    }}
+                    className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-lg p-4 text-left text-white transition-all duration-300 transform hover:scale-105 border border-white/20 hover:border-white/40 btn-anime"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <span className="text-lg">{choice.text}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Affection Bar */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-white font-semibold">
+                    Affection Level
+                  </span>
+                  <span className="text-white">{affection}%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full bg-gradient-to-r ${getMoodColor()} transition-all duration-500`}
+                    style={{ width: `${affection}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Conversation History */}
+          {conversationHistory.length > 0 && (
+            <div className="mt-8 bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10">
+              <h3 className="text-white font-semibold mb-4">
+                Conversation History
+              </h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {conversationHistory.slice(-5).map((entry, index) => (
+                  <div key={index} className="text-sm text-purple-200">
+                    <span className="font-semibold">You:</span> {entry.player}
+                    <br />
+                    <span className="font-semibold">
+                      {waifuTypes[selectedWaifu]?.name || "Waifu"}:
+                    </span>{" "}
+                    {entry.waifu}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback - should not reach here
+  console.log("Reached fallback with gameState:", gameState);
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-purple-900 flex items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-white mb-4">Debug Mode</h1>
+        <p className="text-purple-200 mb-4">Game State: {gameState}</p>
+        <p className="text-purple-200 mb-4">
+          Selected Waifu: {selectedWaifu || "None"}
+        </p>
+        <p className="text-purple-200 mb-4">
+          Show Settings: {showSettings ? "Yes" : "No"}
+        </p>
+        <button
+          onClick={() => {
+            setGameState("start");
+            setShowSettings(false);
+          }}
+          className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded"
+        >
+          Reset to Start
+        </button>
       </div>
     </div>
   );
