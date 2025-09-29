@@ -14,7 +14,9 @@ import {
   Trophy,
   Music,
   RotateCcw,
+  Shield,
 } from "lucide-react";
+import AdminPanel from "./AdminPanel";
 
 // Single waifu with different personality types
 const waifuTypes = {
@@ -117,6 +119,38 @@ const YandereAIGame = () => {
   const [conversationMemory, setConversationMemory] = useState([]);
   const [storyProgress, setStoryProgress] = useState(0);
   const [unlockedEndings, setUnlockedEndings] = useState([]);
+
+  // Admin panel state
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  // Admin panel update function
+  const updateGameData = (updates) => {
+    Object.keys(updates).forEach((key) => {
+      const setter = {
+        gameState: setGameState,
+        selectedWaifu: setSelectedWaifu,
+        mood: setMood,
+        affection: setAffection,
+        conversationCount: setConversationCount,
+        achievements: setAchievements,
+        unlockedOutfits: setUnlockedOutfits,
+        currentOutfit: setCurrentOutfit,
+        screenshots: setScreenshots,
+        gifts: setGifts,
+        currentDate: setCurrentDate,
+        storyProgress: setStoryProgress,
+        unlockedEndings: setUnlockedEndings,
+        waifuTypes: () => {
+          // This would need special handling for waifu types
+          console.log("Waifu types update not implemented yet");
+        },
+      }[key];
+
+      if (setter) {
+        setter(updates[key]);
+      }
+    });
+  };
 
   // Play ending sound effect when game ends
   useEffect(() => {
@@ -3621,7 +3655,42 @@ const YandereAIGame = () => {
               Your choices will affect your waifu's personality and behavior.
             </p>
           </div>
+
+          {/* Admin Panel Button */}
+          <button
+            onClick={() => setShowAdminPanel(true)}
+            className="fixed bottom-6 right-6 bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+            title="Admin Panel"
+          >
+            <Shield className="w-6 h-6" />
+          </button>
         </div>
+
+        {/* Admin Panel */}
+        <AdminPanel
+          isOpen={showAdminPanel}
+          onClose={() => setShowAdminPanel(false)}
+          gameData={{
+            gameState,
+            selectedWaifu,
+            mood,
+            affection,
+            conversationCount,
+            achievements,
+            unlockedOutfits,
+            currentOutfit,
+            screenshots,
+            gifts,
+            currentDate,
+            storyProgress,
+            unlockedEndings,
+          }}
+          onUpdateGameData={updateGameData}
+          waifuTypes={waifuTypes}
+          achievementList={achievementList}
+          giftList={giftList}
+          outfitList={outfitList}
+        />
       </div>
     );
   }
@@ -4604,7 +4673,42 @@ const YandereAIGame = () => {
               </div>
             </div>
           )}
+
+          {/* Admin Panel Button */}
+          <button
+            onClick={() => setShowAdminPanel(true)}
+            className="fixed bottom-6 right-6 bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+            title="Admin Panel"
+          >
+            <Shield className="w-6 h-6" />
+          </button>
         </div>
+
+        {/* Admin Panel */}
+        <AdminPanel
+          isOpen={showAdminPanel}
+          onClose={() => setShowAdminPanel(false)}
+          gameData={{
+            gameState,
+            selectedWaifu,
+            mood,
+            affection,
+            conversationCount,
+            achievements,
+            unlockedOutfits,
+            currentOutfit,
+            screenshots,
+            gifts,
+            currentDate,
+            storyProgress,
+            unlockedEndings,
+          }}
+          onUpdateGameData={updateGameData}
+          waifuTypes={waifuTypes}
+          achievementList={achievementList}
+          giftList={giftList}
+          outfitList={outfitList}
+        />
       </div>
     );
   }

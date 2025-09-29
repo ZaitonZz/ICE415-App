@@ -187,3 +187,49 @@ img {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
 }
+
+/* Admin panel animations */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* Heart beat animation for admin panel */
+@keyframes heart-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.heart-beat {
+  animation: heart-beat 1s ease-in-out infinite;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
