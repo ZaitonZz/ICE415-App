@@ -1,5 +1,5 @@
 import React from "react";
-import YandereAIGame from "../YandereAIGame";
+import YandereAIGame from "../YandereAIGame_NEW";
 
 const GamePage = () => {
   return <YandereAIGame />;
