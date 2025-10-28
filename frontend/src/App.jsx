@@ -59,9 +59,9 @@ function App() {
             }
           />
 
-          {/* Admin Routes - Admin Layout */}
+          {/* Admin Routes - Admin Layout (directly shows panel after login) */}
           <Route
-            path="/admin/panel"
+            path="/admin"
             element={
               <AdminLayout>
                 <AdminPanelPage />
