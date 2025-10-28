@@ -13,10 +13,6 @@ import {
   Camera,
   Trophy,
   Palette,
-  Lock,
-  Eye,
-  EyeOff,
-  LogOut,
   Home,
   Database,
   BarChart3,
@@ -33,52 +29,16 @@ const AdminPanel = ({
   giftList,
   outfitList,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState(null);
 
-  // Admin password (in a real app, this would be server-side)
-  const ADMIN_PASSWORD = "admin123";
-
   // Notification functions
   const showNotification = (message, type = "success") => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
-  };
-
-  // Authentication functions
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    // Simulate loading delay for better UX
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setLoginError("");
-      setPassword("");
-      showNotification("Welcome to Admin Panel!", "success");
-    } else {
-      setLoginError("Incorrect password. Please try again.");
-      setPassword("");
-      showNotification("Invalid password. Please try again.", "error");
-    }
-    setIsLoading(false);
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setPassword("");
-    setLoginError("");
-    setActiveTab("overview");
-    showNotification("Logged out successfully", "info");
   };
 
   // Reset game data
@@ -164,83 +124,7 @@ const AdminPanel = ({
 
   if (!isOpen) return null;
 
-  // Login Screen
-  if (!isAuthenticated) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 z-50 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md p-8 border border-white/20">
-          <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Admin Access</h1>
-            <p className="text-gray-300">
-              Enter password to access admin panel
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 pl-12 pr-12 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent backdrop-blur-sm"
-                  placeholder="Enter admin password"
-                  required
-                />
-                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-              {loginError && (
-                <p className="text-red-400 text-sm mt-2">{loginError}</p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg flex items-center justify-center space-x-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Authenticating...</span>
-                </>
-              ) : (
-                <span>Access Admin Panel</span>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Main Admin Panel
+  // Main Admin Panel (authentication handled by AdminLayout)
   return (
     <div className="fixed inset-0 bg-gray-50 dark:bg-gray-900 z-50 flex flex-col">
       {/* Header */}
@@ -261,25 +145,9 @@ const AdminPanel = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={onClose}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg"
-              >
-                <Home className="w-4 h-4" />
-                <span>Back to Game</span>
-              </button>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span>Admin Online</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
+            <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Admin Online</span>
             </div>
           </div>
         </div>

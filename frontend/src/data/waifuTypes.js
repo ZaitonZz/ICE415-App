@@ -1,0 +1,58 @@
+// Single waifu with different personality types
+export const waifuTypes = {
+  sweet: {
+    name: "Aiko",
+    personality: "Sweet & Caring",
+    description:
+      "A sweet, caring waifu who loves deeply and wants to protect you",
+    color: "from-pink-400 to-red-500",
+    icon: "💕",
+    traits: ["loving", "protective", "romantic"],
+    yandereTrigger: "possessive",
+  },
+  cheerful: {
+    name: "Yuki",
+    personality: "Cheerful & Energetic",
+    description: "Always cheerful and full of energy, loves to make you smile",
+    color: "from-blue-400 to-cyan-500",
+    icon: "❄️",
+    traits: ["energetic", "optimistic", "playful"],
+    yandereTrigger: "jealous",
+  },
+  shy: {
+    name: "Sakura",
+    personality: "Shy & Gentle",
+    description: "Gentle and shy, but has hidden strength and determination",
+    color: "from-pink-300 to-purple-400",
+    icon: "🌸",
+    traits: ["shy", "gentle", "determined"],
+    yandereTrigger: "clingy",
+  },
+  friendly: {
+    name: "Mai",
+    personality: "Friendly & Smiling",
+    description: "Friendly and always smiling, brings joy to your life",
+    color: "from-yellow-400 to-orange-500",
+    icon: "☀️",
+    traits: ["friendly", "cheerful", "social"],
+    yandereTrigger: "territorial",
+  },
+  warm: {
+    name: "Hana",
+    personality: "Welcoming & Warm",
+    description: "Warm and welcoming, makes you feel at home",
+    color: "from-green-400 to-emerald-500",
+    icon: "🌺",
+    traits: ["nurturing", "warm", "motherly"],
+    yandereTrigger: "overprotective",
+  },
+  mysterious: {
+    name: "Luna",
+    personality: "Mysterious & Enigmatic",
+    description: "Mysterious and enigmatic, with hidden depths and secrets",
+    color: "from-purple-600 to-indigo-700",
+    icon: "🌙",
+    traits: ["mysterious", "enigmatic", "alluring"],
+    yandereTrigger: "obsessive",
+  },
+};

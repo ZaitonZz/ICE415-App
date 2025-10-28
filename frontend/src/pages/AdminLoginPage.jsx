@@ -40,7 +40,7 @@ const AdminLoginPage = () => {
 
     if (result.success) {
       if (result.user.isAdmin) {
-        navigate("/admin/panel");
+        navigate("/admin");
       } else {
         setError("Access denied. Admin privileges required.");
         setLoading(false);
