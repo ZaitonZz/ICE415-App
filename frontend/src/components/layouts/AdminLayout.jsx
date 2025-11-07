@@ -47,6 +47,8 @@ const AdminLayout = ({ children }) => {
   const handleLogout = async () => {
     if (window.confirm("Are you sure you want to logout from admin panel?")) {
       await logout();
+      // Redirect to admin login after logout
+      window.location.href = "/admin/login";
     }
   };
 

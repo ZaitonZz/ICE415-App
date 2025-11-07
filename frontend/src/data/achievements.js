@@ -1,0 +1,58 @@
+export const achievementList = [
+  {
+    id: "first_love",
+    name: "First Love",
+    description: "Complete your first conversation",
+    icon: "💕",
+    unlocked: false,
+  },
+  {
+    id: "sweet_talker",
+    name: "Sweet Talker",
+    description: "Reach 80% affection",
+    icon: "🍯",
+    unlocked: false,
+  },
+  {
+    id: "yandere_master",
+    name: "Yandere Master",
+    description: "Trigger yandere mode 3 times",
+    icon: "😈",
+    unlocked: false,
+  },
+  {
+    id: "mystery_solver",
+    name: "Mystery Solver",
+    description: "Complete 5 conversations with Luna",
+    icon: "🔍",
+    unlocked: false,
+  },
+  {
+    id: "photo_enthusiast",
+    name: "Photo Enthusiast",
+    description: "Take 10 screenshots",
+    icon: "📸",
+    unlocked: false,
+  },
+  {
+    id: "date_expert",
+    name: "Date Expert",
+    description: "Go on 3 virtual dates",
+    icon: "💑",
+    unlocked: false,
+  },
+  {
+    id: "gift_giver",
+    name: "Gift Giver",
+    description: "Give 5 gifts to your waifu",
+    icon: "🎁",
+    unlocked: false,
+  },
+  {
+    id: "story_complete",
+    name: "Story Complete",
+    description: "Unlock all story endings",
+    icon: "🏆",
+    unlocked: false,
+  },
+];
